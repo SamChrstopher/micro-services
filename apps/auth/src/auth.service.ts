@@ -1,7 +1,7 @@
 import { ConflictException, Injectable, UnauthorizedException, Inject } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
-import { ClientProxy } from '@nestjs/microservices';
+import { ClientProxy, MessagePattern } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import { regiterDto } from './dto/register.dto';
 import { loginDto } from './dto/login.dto';
@@ -13,6 +13,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
+  
   async register(registerDto: regiterDto) {
     const { username, email, password } = registerDto;
 

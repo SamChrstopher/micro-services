@@ -11,13 +11,21 @@ export class UsersService {
     const createdUser = new this.userModel(userData);
     return createdUser.save();
   }
+  
+  async findByEmail(email: string): Promise<User> {
+    const user = await this.userModel.findOne({ email }).exec();
+    if (!user) throw new NotFoundException('User not found');
+    return user;
+  }
 
   async findAll(): Promise<User[]> {
     return this.userModel.find().exec();
   }
 
   async update(id: string, updateData: Partial<User>): Promise<User> {
-    const updatedUser = await this.userModel.findByIdAndUpdate(id, updateData, { new: true });
+    const updatedUser = await this.userModel.findByIdAndUpdate(id, updateData, {
+      new: true,
+    });
     if (!updatedUser) throw new NotFoundException('User not found');
     return updatedUser;
   }

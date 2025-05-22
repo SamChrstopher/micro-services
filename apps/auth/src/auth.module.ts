@@ -5,18 +5,33 @@ import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { MongooseModule } from '@nestjs/mongoose';
 
 @Module({
   imports: [
-    ConfigModule.forRoot(),
-    ClientsModule.register([
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: 'apps/auth/.env',
+    }),
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        uri: configService.get<string>('MONGO_URI'),
+      }),
+      inject: [ConfigService],
+    }),
+    ClientsModule.registerAsync([
       {
         name: 'USER_SERVICE',
-        transport: Transport.TCP,
-        options: {
-          host: '127.0.0.1',
-          port: 3001,
-        },
+        imports: [ConfigModule],
+        inject: [ConfigService],
+        useFactory: (config: ConfigService) => ({
+          transport: Transport.TCP,
+          options: {
+            host: config.get<string>('USER_SERVICE_HOST'),
+            port: config.get<number>('USER_SERVICE_PORT'),
+          },
+        }),
       },
     ]),
     JwtModule.registerAsync({

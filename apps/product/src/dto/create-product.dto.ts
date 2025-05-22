@@ -20,9 +20,9 @@ export class CreateProductDto {
   @IsNotEmpty()
   image: string;
 
-  @IsObject()
-  rating: {
-    rate: number;
-    count: number;
-  };
+  // @IsObject()
+  // rating: {
+  //   rate: number;
+  //   count: number;
+  // };
 }

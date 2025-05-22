@@ -1,10 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { AuthModule } from './auth.module';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
   const app = await NestFactory.create(AuthModule);
-  await app.listen(process.env.port ?? 3002);
-    console.log('Auth microservice is listening on port 3002 🚀');
-
+  const configService = app.get(ConfigService);
+  const port = configService.get<number>('PORT') || 3000;
+  await app.listen(port);
+  console.log(`Auth service is running on http://localhost:${port}`);
 }
 bootstrap();

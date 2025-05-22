@@ -1,21 +1,12 @@
-// src/main.ts
 import { NestFactory } from '@nestjs/core';
 import { CategoryModule } from './category.module';
-import { Transport, MicroserviceOptions } from '@nestjs/microservices';
+import { ConfigService } from '@nestjs/config';
 
 async function bootstrap() {
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    CategoryModule,
-    {
-      transport: Transport.TCP,
-      options: {
-        host: '127.0.0.1',
-        port: 3005, 
-      },
-    },
-  );
-
-  await app.listen();
-  console.log('Category microservice is listening on port 3005 🚀');
+  const app = await NestFactory.create(CategoryModule);
+  const configService = app.get(ConfigService);
+  const port = configService.get<number>('PORT') || 3002;
+  await app.listen(port);
+  console.log(`Category service is running on http://localhost:${port}`);
 }
 bootstrap();
