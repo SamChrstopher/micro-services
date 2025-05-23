@@ -14,8 +14,8 @@ import { CategoryController } from './category.controller';
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => ({
-        uri: configService.get<string>('MONGO_URI'),
+      useFactory: async (config: ConfigService) => ({
+        uri: config.get<string>('MONGO_URI'),
       }),
     }),
     MongooseModule.forFeature([{ name: Category.name, schema: CategorySchema }]),

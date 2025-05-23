@@ -9,26 +9,30 @@ export class UsersController {
 
   @MessagePattern({ cmd: 'create-user' })
   async createUser(@Payload() userData: Partial<User>) {
-    return this.usersService.create(userData);
+    try {
+      return await this.usersService.create(userData);
+    } catch (error) {
+      return { error: error.message };
+    }
   }
 
   @MessagePattern({ cmd: 'find-user-by-email' })
   async findByEmail(@Payload() email: string) {
-    return this.usersService.findByEmail(email);
+    return await this.usersService.findByEmail(email);
   }
 
   @MessagePattern({ cmd: 'get-all-users' })
   async getAllUsers() {
-    return this.usersService.findAll();
+    return await this.usersService.findAll();
   }
 
   @MessagePattern({ cmd: 'update-user' })
   async updateUser(@Payload() data: { id: string; updateData: Partial<User> }) {
-    return this.usersService.update(data.id, data.updateData);
+    return await this.usersService.update(data.id, data.updateData);
   }
 
   @MessagePattern({ cmd: 'delete-user' })
   async deleteUser(@Payload() id: string) {
-    return this.usersService.delete(id);
+    return await this.usersService.delete(id);
   }
 }

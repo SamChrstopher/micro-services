@@ -3,11 +3,14 @@ import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 
+//We're using Controller Decorator to control the services of the application.
 @Controller('products') // base route will be /products
 export class ProductsController {
+  //We are injecting product service as dependency to product controller class via loose-coupling
+  //Setters, Getters and binding is done by @Controller (Nest.js is taking care of it).
   constructor(private readonly productsService: ProductsService) {}
 
-  // POST /products
+  // POST Request with the url parameter "/products"=> we can also add /create or something inside @Post('/create)
   @Post()
   create(@Body() createProductDto: CreateProductDto) {
     return this.productsService.create(createProductDto);

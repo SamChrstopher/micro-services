@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from './schema/user.schema';
@@ -8,14 +8,30 @@ export class UsersService {
   constructor(@InjectModel(User.name) private userModel: Model<UserDocument>) {}
 
   async create(userData: Partial<User>): Promise<User> {
+    // Check if email already exists
+    const existingUser = await this.userModel.findOne({ 
+      email: userData.email 
+    }).exec();
+
+    if (existingUser) {
+      throw new ConflictException('Email already in use');
+    }
+
+    // Check if username already exists
+    const existingUsername = await this.userModel.findOne({ 
+      username: userData.username 
+    }).exec();
+
+    if (existingUsername) {
+      throw new ConflictException('Username already in use');
+    }
+
     const createdUser = new this.userModel(userData);
     return createdUser.save();
   }
-  
-  async findByEmail(email: string): Promise<User> {
-    const user = await this.userModel.findOne({ email }).exec();
-    if (!user) throw new NotFoundException('User not found');
-    return user;
+
+  async findByEmail(email: string): Promise<User | null> {
+    return this.userModel.findOne({ email }).exec();
   }
 
   async findAll(): Promise<User[]> {

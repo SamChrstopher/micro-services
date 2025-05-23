@@ -1,74 +1,90 @@
-import { ConflictException, Injectable, UnauthorizedException, Inject } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
-import { ClientProxy, MessagePattern } from '@nestjs/microservices';
-import { firstValueFrom } from 'rxjs';
+import { Inject, Injectable, ConflictException, UnauthorizedException } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 import { regiterDto } from './dto/register.dto';
 import { loginDto } from './dto/login.dto';
+import * as bcrypt from 'bcrypt';
+import { firstValueFrom } from 'rxjs';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
   constructor(
-    @Inject('USER_SERVICE') private readonly userClient: ClientProxy,
-    private jwtService: JwtService,
+    @Inject('USER') private readonly userClient: ClientProxy,
+    private readonly jwtService: JwtService,
   ) {}
 
-  
   async register(registerDto: regiterDto) {
     const { username, email, password } = registerDto;
 
+    // Check if user exists
     const existingUser = await firstValueFrom(
-      this.userClient.send({ cmd: 'find-by-email' }, email),
+      this.userClient.send({ cmd: 'find-user-by-email' }, email),
     );
 
     if (existingUser) {
-      throw new ConflictException('Email Already Registered');
+      throw new ConflictException('User already exists');
     }
 
+    // Hash the password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create the user
     const user = await firstValueFrom(
-      this.userClient.send({ cmd: 'user-create' }, {
-        username,
-        email,
-        password: hashedPassword,
-      }),
+      this.userClient.send(
+        { cmd: 'create-user' },
+        { username, email, password: hashedPassword, role: 'customer' },
+      ),
     );
 
+    // Generate JWT token
+    const token = this.jwtService.sign({
+      email: user.email,
+      role: user.role,
+    });
+
     return {
-      message: 'User Created Successfully',
-      user: { username: user.username, email: user.email },
+      message: 'User registered successfully',
+      user: {
+        username: user.username,
+        email: user.email,
+      },
+      token,
     };
   }
 
   async login(loginDto: loginDto) {
     const { email, password } = loginDto;
 
+    // Fetch the user by email
     const user = await firstValueFrom(
-      this.userClient.send({ cmd: 'find-by-email' }, email),
+      this.userClient.send({ cmd: 'find-user-by-email' }, email),
     );
 
     if (!user) {
-      throw new UnauthorizedException('Invalid Credentials');
+      throw new UnauthorizedException('Invalid credentials');
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    // Compare passwords
+    const passwordMatch = await bcrypt.compare(password, user.password);
 
-    if (!isMatch) {
-      throw new UnauthorizedException('Invalid Password');
+    if (!passwordMatch) {
+      throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = { email: user.email, role: user.role };
-
-    const token = this.jwtService.sign(payload);
+    // Generate JWT token
+    const token = this.jwtService.sign({
+      email: user.email,
+      role: user.role,
+    });
 
     return {
-      message: 'User Logged In Successfully',
+      message: 'Login successful',
       user: {
         username: user.username,
         email: user.email,
-        token: token,
+        role: user.role,
       },
+      token,
     };
   }
 }
